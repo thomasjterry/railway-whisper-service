@@ -78,6 +78,38 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// New endpoint: transcribe from URL (Railway downloads from R2)
+app.post('/transcribe-from-url', express.json(), async (req, res) => {
+  try {
+    const { audioUrl } = req.body;
+    
+    if (!audioUrl) {
+      return res.status(400).json({ error: 'audioUrl is required' });
+    }
+
+    console.log('Downloading audio from R2:', audioUrl);
+    
+    // Download the audio file from the presigned R2 URL
+    const audioResponse = await fetch(audioUrl);
+    if (!audioResponse.ok) {
+      throw new Error(`Failed to download audio: ${audioResponse.statusText}`);
+    }
+    
+    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+    console.log(`Downloaded ${audioBuffer.length} bytes`);
+    
+    // Transcribe (with chunking if needed)
+    const transcript = await splitAndTranscribe(audioBuffer);
+    
+    console.log('Transcription complete');
+    res.json({ transcript });
+    
+  } catch (error) {
+    console.error('Transcription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Railway Whisper service running on port ${PORT}`);
 });

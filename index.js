@@ -4,6 +4,7 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 
 const app = express();
+app.use(express.json()); // Parse JSON request bodies
 const upload = multer({ storage: multer.memoryStorage() });
 
 const PORT = process.env.PORT || 3000;
@@ -79,7 +80,7 @@ app.get('/health', (req, res) => {
 });
 
 // New endpoint: transcribe from URL (Railway downloads from R2)
-app.post('/transcribe-from-url', express.json(), async (req, res) => {
+app.post('/transcribe-from-url', async (req, res) => {
   try {
     const { audioUrl } = req.body;
     
